@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -12,7 +10,7 @@ const Write = () => {
   const [file, setFile] = useState(null);
   const [cat, setCat] = useState(state?.cat || "");
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const upload = async () => {
     try {
@@ -21,32 +19,38 @@ const Write = () => {
       const res = await axios.post("/upload", formData);
       return res.data;
     } catch (err) {
-      console.log(err);
+      console.log("Upload error:", err);
     }
   };
 
   const handleClick = async (e) => {
     e.preventDefault();
+    console.log("Publish button clicked");
     const imgUrl = await upload();
+    console.log("Image URL:", imgUrl);
 
     try {
-      state
-        ? await axios.put(`/posts/${state.id}`, {
-            title,
-            desc: value,
-            cat,
-            img: file ? imgUrl : "",
-          })
-        : await axios.post(`/posts/`, {
-            title,
-            desc: value,
-            cat,
-            img: file ? imgUrl : "",
-            date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
-          });
-          navigate("/")
+      if (state) {
+        console.log("Updating post with ID:", state.id);
+        await axios.put(`/posts/${state.id}`, {
+          title,
+          desc: value,
+          cat,
+          img: file ? imgUrl : "",
+        });
+      } else {
+        console.log("Creating new post");
+        await axios.post(`/posts/`, {
+          title,
+          desc: value,
+          cat,
+          img: file ? imgUrl : "",
+          date: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
+        });
+      }
+      navigate("/");
     } catch (err) {
-      console.log(err);
+      console.log("Error in handleClick:", err);
     }
   };
 
@@ -59,11 +63,10 @@ const Write = () => {
           onChange={(e) => setTitle(e.target.value)}
         />
         <div className="editorContainer">
-          <ReactQuill
+          <textarea
             className="editor"
-            theme="snow"
             value={value}
-            onChange={setValue}
+            onChange={(e) => setValue(e.target.value)}
           />
         </div>
       </div>
